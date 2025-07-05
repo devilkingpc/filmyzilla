@@ -63,9 +63,19 @@ export default function MoviePage() {
         if (slug.startsWith('http')) {
           movieUrl = slug;
         } else {
-          // Remove any leading 'movies/' from slug to avoid duplication
-          const cleanSlug = slug.replace(/^movies\//, '');
-          movieUrl = `https://www.filmyzilla13.com/movies/${cleanSlug}`;
+          // Remove any leading path components to get clean slug
+          const cleanSlug = slug.replace(/^(movies?\/|category\/)?/, '');
+          
+          // Determine if we need /movie/ or /movies/ by checking the slug pattern
+          let urlPath = '/movies/'; // default
+          
+          // If slug has .html extension, it might be a direct file
+          if (cleanSlug.includes('.html')) {
+            // For HTML files, try /movie/ first
+            urlPath = '/movie/';
+          }
+          
+          movieUrl = `https://www.filmyzilla13.com${urlPath}${cleanSlug}`;
         }
         
         const response = await fetch(`/api/movie?url=${encodeURIComponent(movieUrl)}`);

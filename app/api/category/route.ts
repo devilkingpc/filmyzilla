@@ -36,11 +36,37 @@ export async function GET(request: Request) {
     
     console.log('Fetching category URL:', categoryUrl);
     
-    const response = await axios.get(categoryUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    // Try the URL as-is first, then try alternatives if it fails
+    let response;
+    let finalUrl = categoryUrl;
+    
+    try {
+      response = await axios.get(categoryUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+      });
+    } catch (error) {
+      // If direct URL fails and doesn't have /category/, try adding it
+      if (!categoryUrl.includes('/category/')) {
+        const baseUrl = 'https://www.filmyzilla13.com';
+        const urlPart = categoryUrl.replace(baseUrl, '').replace(/^\/+/, '');
+        const alternativeUrl = `${baseUrl}/category/${urlPart}`;
+        
+        try {
+          response = await axios.get(alternativeUrl, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+          });
+          finalUrl = alternativeUrl;
+        } catch (altError) {
+          throw error; // Throw original error if alternative also fails
+        }
+      } else {
+        throw error;
       }
-    });
+    }
     
     const $ = cheerio.load(response.data);
     const movies: MovieDetails[] = [];
@@ -238,12 +264,12 @@ export async function GET(request: Request) {
       success: true,
       categoryTitle,
       totalMovies: movies.length,
-      totalSubCategories: 0,
+      totalSubCategories: subCategories.length,
       movies,
-      subCategories: [],
-      hasSubCategories: false,
+      subCategories,
+      hasSubCategories: subCategories.length > 0,
       scrapedAt: new Date().toISOString(),
-      sourceUrl: categoryUrl
+      sourceUrl: finalUrl
     });
     
   } catch (error) {

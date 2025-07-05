@@ -43,11 +43,39 @@ export async function GET(request: Request) {
       );
     }
 
-    const response = await axios.get(movieUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    // Try multiple URL patterns if the first one fails
+    const urlsToTry = [movieUrl];
+    
+    // If URL doesn't work, try alternative patterns
+    if (movieUrl.includes('/movies/')) {
+      urlsToTry.push(movieUrl.replace('/movies/', '/movie/'));
+    } else if (movieUrl.includes('/movie/')) {
+      urlsToTry.push(movieUrl.replace('/movie/', '/movies/'));
+    }
+    
+    let response;
+    let finalUrl = movieUrl;
+    
+    for (const urlToTry of urlsToTry) {
+      try {
+        response = await axios.get(urlToTry, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+          }
+        });
+        finalUrl = urlToTry;
+        break;
+      } catch (urlError) {
+        console.log(`Failed to fetch ${urlToTry}, trying next...`);
+        if (urlToTry === urlsToTry[urlsToTry.length - 1]) {
+          throw urlError; // If last URL also fails, throw the error
+        }
       }
-    });
+    }
+
+    if (!response) {
+      throw new Error('All URL patterns failed');
+    }
     
     const $ = cheerio.load(response.data);
     
@@ -226,7 +254,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       success: true,
       data: movieDetails,
-      sourceUrl: movieUrl,
+      sourceUrl: finalUrl,
       scrapedAt: new Date().toISOString()
     });
     

@@ -49,15 +49,9 @@ export default function CategoryPage() {
         if (slug.startsWith('http')) {
           categoryUrl = slug;
         } else {
-          // Handle different URL formats
-          if (slug.includes('.html')) {
-            // Direct filename like "Popular-tv-Shows-hindi-Dubbed.html"
-            categoryUrl = `https://www.filmyzilla13.com/category/${slug}`;
-          } else {
-            // Remove any leading 'category/' from slug to avoid duplication
-            const cleanSlug = slug.replace(/^category\//, '');
-            categoryUrl = `https://www.filmyzilla13.com/category/${cleanSlug}`;
-          }
+          // Remove any leading path components to get clean slug
+          const cleanSlug = slug.replace(/^category\//, '');
+          categoryUrl = `https://www.filmyzilla13.com/category/${cleanSlug}`;
         }
         
         console.log('Fetching category URL:', categoryUrl);
@@ -438,3 +432,4 @@ export default function CategoryPage() {
     </div>
   );
 }
+        
