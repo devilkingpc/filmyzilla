@@ -21,7 +21,7 @@ export async function GET() {
 try {
 // ✅ Always fetch source from GitHub JSON
 const sourcesRes = await axios.get<Sources>(
-'https://raw.githubusercontent.com/username/repo/main/sources.json'
+'https://raw.githubusercontent.com/devilkingpc/Css/refs/heads/main/sources.json'
 );
 const sources = sourcesRes.data;
 const serverUrl = sources.primary;
@@ -107,4 +107,5 @@ message: error instanceof Error ? error.message : 'Unknown error'
 );
 }
 }
+
 
